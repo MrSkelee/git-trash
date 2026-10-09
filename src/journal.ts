@@ -121,12 +121,19 @@ export function createTrashSession(
   return session;
 }
 
+export interface UndoCollision {
+  originalPath: string;
+  restoredAs: string;
+}
+
 /**
  * Undoes the most recent session, restoring files to original paths.
+ * If a file already exists with DIFFERENT content, restores as `.restored` to prevent data loss.
  */
 export function undoLastSession(cwd: string = process.cwd()): {
   session: TrashSession;
   restoredCount: number;
+  collisions: UndoCollision[];
 } | null {
   const journal = loadJournal(cwd);
   if (journal.sessions.length === 0) {
@@ -134,7 +141,9 @@ export function undoLastSession(cwd: string = process.cwd()): {
   }
 
   const session = journal.sessions.pop()!;
+  const repoRoot = getRepoRoot(cwd);
   let restoredCount = 0;
+  const collisions: UndoCollision[] = [];
 
   for (const item of session.items) {
     if (fs.existsSync(item.backupFile)) {
@@ -146,10 +155,42 @@ export function undoLastSession(cwd: string = process.cwd()): {
       const stat = fs.statSync(item.backupFile);
       if (stat.isDirectory()) {
         fs.cpSync(item.backupFile, item.absolutePath, { recursive: true });
+        restoredCount++;
       } else {
+        // Check for collision with an existing file (only for untracked files)
+        if (!item.isModifiedTracked && fs.existsSync(item.absolutePath)) {
+          let isIdentical = false;
+          try {
+            const currentBuf = fs.readFileSync(item.absolutePath);
+            const backupBuf = fs.readFileSync(item.backupFile);
+            if (currentBuf.equals(backupBuf)) {
+              isIdentical = true;
+            }
+          } catch {}
+
+          if (isIdentical) {
+            restoredCount++;
+            continue;
+          }
+
+          // File has different content! Restore to safe .restored path
+          const ext = path.extname(item.absolutePath);
+          const base = path.basename(item.absolutePath, ext);
+          const dir = path.dirname(item.absolutePath);
+          const safePath = path.join(dir, `${base}.restored${ext}`);
+
+          fs.copyFileSync(item.backupFile, safePath);
+          collisions.push({
+            originalPath: item.relativePath,
+            restoredAs: path.relative(repoRoot, safePath),
+          });
+          restoredCount++;
+          continue;
+        }
+
         fs.copyFileSync(item.backupFile, item.absolutePath);
+        restoredCount++;
       }
-      restoredCount++;
     }
   }
 
@@ -166,7 +207,7 @@ export function undoLastSession(cwd: string = process.cwd()): {
 
   saveJournal(journal, cwd);
 
-  return { session, restoredCount };
+  return { session, restoredCount, collisions };
 }
 
 /**

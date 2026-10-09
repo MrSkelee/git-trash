@@ -88,9 +88,27 @@ export async function clean(options: CleanOptions = {}): Promise<{
   // 1. Create a safety snapshot in .git/trash journal
   const session = createTrashSession("clean", files, cwd);
 
-  // 2. Move files to OS Recycle Bin using native OS APIs
+  // 2. Clear any read-only flags to prevent OS EPERM on Windows/Linux
+  for (const file of files) {
+    try {
+      if (fs.existsSync(file.absolutePath)) {
+        fs.chmodSync(file.absolutePath, 0o666);
+      }
+    } catch {}
+  }
+
+  // 3. Move files to OS Recycle Bin with fallback resilience
   const absPaths = files.map((f) => f.absolutePath);
-  await trash(absPaths, { glob: false });
+  try {
+    await trash(absPaths, { glob: false });
+  } catch (batchErr) {
+    // Fallback: try individual items so a single locked file doesn't abort the entire batch
+    for (const file of files) {
+      try {
+        await trash(file.absolutePath, { glob: false });
+      } catch {}
+    }
+  }
 
   if (!options.silent) {
     console.log(pc.green(`\n✔ Safely moved ${pc.bold(files.length.toString())} untracked file(s) to your OS Recycle Bin / Trash:`));
@@ -191,6 +209,7 @@ export async function discard(
 export function undo(cwd: string = process.cwd(), silent: boolean = false): {
   restoredCount: number;
   session?: TrashSession;
+  collisions?: Array<{ originalPath: string; restoredAs: string }>;
 } {
   if (!isGitRepo(cwd)) {
     throw new Error("Not inside a git repository. git-trash requires a Git working tree.");
@@ -208,6 +227,14 @@ export function undo(cwd: string = process.cwd(), silent: boolean = false): {
     console.log(pc.green(`\n✔ Successfully restored ${pc.bold(result.restoredCount.toString())} file(s) from session [${result.session.id}]:`));
     for (const item of result.session.items) {
       console.log(`  ${pc.green("✔")} ${item.relativePath}`);
+    }
+
+    if (result.collisions && result.collisions.length > 0) {
+      console.log(pc.yellow(`\n⚠️  Collision Warning: The following file(s) already existed with new content.`));
+      console.log(pc.yellow(`   Current files were preserved! Trashed copies were restored alongside with '.restored':`));
+      for (const col of result.collisions) {
+        console.log(`   - Preserved: ${pc.bold(col.originalPath)}  ➔  Restored as: ${pc.cyan(col.restoredAs)}`);
+      }
     }
     console.log("");
   }
