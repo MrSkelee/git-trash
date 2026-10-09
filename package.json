@@ -1,0 +1,45 @@
+{
+  "name": "git-trash",
+  "version": "1.0.0",
+  "description": "The OS Recycle Bin for Git — safely move untracked and discarded files to your system Trash instead of permanent hard-deletion.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "git-trash": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "git",
+    "git-trash",
+    "git-clean",
+    "trash",
+    "recycle-bin",
+    "undo",
+    "safety",
+    "cli"
+  ],
+  "author": "MrSkele",
+  "license": "MIT",
+  "dependencies": {
+    "picocolors": "^1.1.1",
+    "trash": "^10.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
