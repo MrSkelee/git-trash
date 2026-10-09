@@ -39,7 +39,7 @@ async function main() {
   }
 
   if (args.includes("-v") || args.includes("--version")) {
-    console.log("git-trash v1.0.0");
+    console.log("git-trash v1.0.1");
     process.exit(0);
   }
 

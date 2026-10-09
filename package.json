@@ -1,6 +1,6 @@
 {
   "name": "git-trash",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The OS Recycle Bin for Git — safely move untracked and discarded files to your system Trash instead of permanent hard-deletion.",
   "type": "module",
   "main": "dist/index.js",
