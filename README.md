@@ -129,3 +129,10 @@ git trash list
 ## 📄 License
 
 MIT © [MrSkele](https://github.com/MrSkelee)
+
+---
+
+<p align="center">
+  <sub>Vibe Coded with 💖 by MrSkele & Antigravity</sub>
+</p>
+
