@@ -30,6 +30,14 @@
   ],
   "author": "MrSkele",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MrSkelee/git-trash.git"
+  },
+  "homepage": "https://github.com/MrSkelee/git-trash#readme",
+  "bugs": {
+    "url": "https://github.com/MrSkelee/git-trash/issues"
+  },
   "dependencies": {
     "picocolors": "^1.1.1",
     "trash": "^10.1.1"
