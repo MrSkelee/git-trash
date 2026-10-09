@@ -24,15 +24,24 @@ For 20 years, Git commands like `git clean -fd` and `git restore .` have operate
 
 ---
 
-## 📦 Installation
+## 📦 Quick Setup
 
-Install globally so it acts as a native Git subcommand:
+Enable `git trash` as a native Git subcommand on your machine:
 
 ```bash
-npm install -g git-trash
+git config --global alias.trash "!npx git-trash"
 ```
 
-Or run directly without installing:
+Once configured, simply use `git trash` anywhere:
+
+```bash
+git trash               # Safe clean untracked files
+git trash -n            # Dry run preview
+git trash discard .     # Safe discard modifications
+git trash undo          # Instant restore
+```
+
+Or run directly via npx without configuring:
 
 ```bash
 npx git-trash
